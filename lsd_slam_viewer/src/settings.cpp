@@ -23,8 +23,8 @@
 
 
 // new:
-float pointTesselation = 1;
-float lineTesselation = 2;
+float pointTesselation = 1; //画点的大小
+float lineTesselation = 2; //画线的宽度
 
 bool keepInMemory=true;
 bool showKFCameras = true;

@@ -68,9 +68,9 @@ public:
 	bool flushPointcloud;
 	bool printNumbers;
 private:
-	std::map<int, KeyFrameDisplay*> keyframesByID;
+	std::map<int, KeyFrameDisplay*> keyframesByID; //ID与关键帧建立映射
 	std::vector<KeyFrameDisplay*> keyframes;
-	std::vector<GraphConstraintPt> constraints;
+	std::vector<GraphConstraintPt> constraints;  //图优化的边
 
 	boost::mutex dataMutex;
 

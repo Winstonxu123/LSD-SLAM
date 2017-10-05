@@ -45,18 +45,18 @@ void KeyFrameGraphDisplay::draw()
 	dataMutex.lock();
 	numRefreshedAlready = 0;
 
-	// draw keyframes
+	// draw keyframes关键帧的相机位姿和点云在这里得到调用
 	float color[3] = {0,0,1};
 	for(unsigned int i=0;i<keyframes.size();i++)
 	{
-		if(showKFCameras)
+		if(showKFCameras) //showKFCamera = true
 			keyframes[i]->drawCam(lineTesselation, color);
 
-		if((showKFPointclouds && (int)i > cutFirstNKf) || i == keyframes.size()-1)
+		if((showKFPointclouds && (int)i > cutFirstNKf) || i == keyframes.size()-1) //showKFPointclouds = true,在开始的几个关键帧内不去画，当关键帧达到5以上时再去画点云
 			keyframes[i]->drawPC(pointTesselation, 1);
 	}
 
-
+/*----------------------------------------------创建点云地图ply-----------------------------------------------------**/
 	if(flushPointcloud)
 	{
 
@@ -65,13 +65,14 @@ void KeyFrameGraphDisplay::draw()
 		int numpts = 0;
 		for(unsigned int i=0;i<keyframes.size();i++)
 		{
-			if((int)i > cutFirstNKf)
-				numpts += keyframes[i]->flushPC(&f);
+			if((int)i > cutFirstNKf) //当i>5的时候
+				numpts += keyframes[i]->flushPC(&f); //flushPC返回的是要画的点云数量,功能是记录某一帧下要画的点云信息，numpts就将不同关键帧下的所有点云数量给记录了下来
 		}
 		f.flush();
 		f.close();
 
 		std::ofstream f2((ros::package::getPath("lsd_slam_viewer")+"/pc.ply").c_str());
+		//点云的头
 		f2 << std::string("ply\n");
 		f2 << std::string("format binary_little_endian 1.0\n");
 		f2 << std::string("element vertex ") << numpts << std::string("\n");
@@ -81,13 +82,13 @@ void KeyFrameGraphDisplay::draw()
 		f2 << std::string("property float intensity\n");
 		f2 << std::string("end_header\n");
 
-		std::ifstream f3((ros::package::getPath("lsd_slam_viewer")+"/pc_tmp.ply").c_str());
-		while(!f3.eof()) f2.put(f3.get());
+		std::ifstream f3((ros::package::getPath("lsd_slam_viewer")+"/pc_tmp.ply").c_str()); //将前面的输出f作为输入
+		while(!f3.eof()) f2.put(f3.get()); //将点云的头放在数据前面
 
 		f2.close();
 		f3.close();
 
-		system(("rm "+ros::package::getPath("lsd_slam_viewer")+"/pc_tmp.ply").c_str());
+		system(("rm "+ros::package::getPath("lsd_slam_viewer")+"/pc_tmp.ply").c_str());  //将临时点云文件给删除了
 		flushPointcloud = false;
 		printf("Done Flushing Pointcloud with %d points!\n", numpts);
 
@@ -106,13 +107,21 @@ void KeyFrameGraphDisplay::draw()
 
 		printf("Have %d points, %d keyframes, %d constraints. Displaying %d points.\n",
 				totalPoint, (int)keyframes.size(), (int)constraints.size(), visPoints);
+
+		//把点的信息保存到一个文件,add by Steve Xu----------------------------------------------------------------------------
+		std::ofstream pointFile((ros::package::getPath("lsd_slam_viewer")+"/pointInfo").c_str());
+		pointFile << std::string("Have %d points, %d keyframes, %d constraints. Displaying %d points.\n",
+				totalPoint, (int)keyframes.size(), (int)constraints.size(), visPoints);
+		//---------------------------------------------------------------------------------------------------------------------
+
+
 		printNumbers = false;
 	}
 
 
 
 
-	if(showConstraints)
+	if(showConstraints) //showConstraints = true
 	{
 		// draw constraints
 		glLineWidth(lineTesselation);
@@ -168,9 +177,10 @@ void KeyFrameGraphDisplay::addGraphMsg(lsd_slam_viewer::keyframeGraphMsgConstPtr
 		constraints[i].from = 0;
 		constraints[i].to = 0;
 
-		if(keyframesByID.count(constraintsIn[i].from) != 0)
+		if(keyframesByID.count(constraintsIn[i].from) != 0) //此处肯定不为0
 			constraints[i].from = keyframesByID[constraintsIn[i].from];
-//		else
+		else
+			printf("ERROR: graph from is invalid");
 //			printf("ERROR: graph update contains constraints for %d -> %d, but I dont have a frame %d!\n",
 //					constraintsIn[i].from,
 //					constraintsIn[i].to,
@@ -179,6 +189,8 @@ void KeyFrameGraphDisplay::addGraphMsg(lsd_slam_viewer::keyframeGraphMsgConstPtr
 
 		if(keyframesByID.count(constraintsIn[i].to) != 0)
 			constraints[i].to = keyframesByID[constraintsIn[i].to];
+		else
+			printf("ERROR: graph to is invalid");
 //		else
 //			printf("ERROR: graph update contains constraints for %d -> %d, but I dont have a frame %d!\n",
 //					constraintsIn[i].from,
@@ -196,7 +208,7 @@ void KeyFrameGraphDisplay::addGraphMsg(lsd_slam_viewer::keyframeGraphMsgConstPtr
 	{
 		if(keyframesByID.count(graphPoses[i].id) == 0)
 		{
-		//	printf("ERROR: graph update contains pose for frame %d, but I dont have a frame %d!\n", graphPoses[i].id, graphPoses[i].id);
+			printf("ERROR: graph update contains pose for frame %d, but I dont have a frame %d!\n", graphPoses[i].id, graphPoses[i].id);
 		}
 		else
 			memcpy(keyframesByID[graphPoses[i].id]->camToWorld.data(), graphPoses[i].camToWorld, 7*sizeof(float));

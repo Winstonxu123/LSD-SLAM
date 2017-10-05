@@ -309,7 +309,7 @@ int KeyFrameDisplay::flushPC(std::ofstream* f)
 			}
 
 
-			Sophus::Vector3f pt = camToWorld * (Sophus::Vector3f((x*fxi + cxi), (y*fyi + cyi), 1) * depth);//将像素坐标转换成世界坐标
+			Sophus::Vector3f pt = camToWorld * (Sophus::Vector3f((x*fxi + cxi), (y*fyi + cyi), 1) * depth);//将像素坐标转换成世界坐标，为了接下来输出点云文件
 			tmpBuffer[num].point[0] = pt[0];
 			tmpBuffer[num].point[1] = pt[1];
 			tmpBuffer[num].point[2] = pt[2];

@@ -62,6 +62,7 @@ KeyFrameDisplay::~KeyFrameDisplay()
 }
 
 
+//读取消息里的信息进行设置
 void KeyFrameDisplay::setFrom(lsd_slam_viewer::keyframeMsgConstPtr msg)
 {
 	// copy over campose.
@@ -86,7 +87,7 @@ void KeyFrameDisplay::setFrom(lsd_slam_viewer::keyframeMsgConstPtr msg)
 		delete[] originalInput;
 	originalInput=0;
 
-	if(msg->pointcloud.size() != width*height*sizeof(InputPointDense))
+	if(msg->pointcloud.size() != width*height*sizeof(InputPointDense))//对于每一个点占据sizeof(InputPointDense)空间
 	{
 		if(msg->pointcloud.size() != 0)
 		{
@@ -136,7 +137,7 @@ void KeyFrameDisplay::refreshPC()
 
 
 	// make data
-	MyVertex* tmpBuffer = new MyVertex[width*height];
+	MyVertex* tmpBuffer = new MyVertex[width*height];//将所有点云数据放到临时缓存中
 
 	my_scaledTH =scaledDepthVarTH;
 	my_absTH = absDepthVarTH;
@@ -147,6 +148,7 @@ void KeyFrameDisplay::refreshPC()
 	vertexBufferNumPoints = 0;
 
 	int total = 0, displayed = 0;
+	//对于关键帧中所有的点哪些要显示，哪些不要显示进行判决
 	for(int y=1;y<height-1;y++)
 		for(int x=1;x<width-1;x++)
 		{
@@ -157,7 +159,7 @@ void KeyFrameDisplay::refreshPC()
 			if(my_sparsifyFactor > 1 && rand()%my_sparsifyFactor != 0) continue;
 
 			float depth = 1 / originalInput[x+y*width].idepth;
-			float depth4 = depth*depth; depth4*= depth4;
+			float depth4 = depth*depth; depth4*= depth4; //depth的四次方
 
 
 			if(originalInput[x+y*width].idepth_var * depth4 > my_scaledTH)
@@ -185,7 +187,7 @@ void KeyFrameDisplay::refreshPC()
 					continue;
 			}
 
-			tmpBuffer[vertexBufferNumPoints].point[0] = (x*fxi + cxi) * depth;
+			tmpBuffer[vertexBufferNumPoints].point[0] = (x*fxi + cxi) * depth; //从像素坐标变换成相机坐标
 			tmpBuffer[vertexBufferNumPoints].point[1] = (y*fyi + cyi) * depth;
 			tmpBuffer[vertexBufferNumPoints].point[2] = depth;
 
@@ -307,7 +309,7 @@ int KeyFrameDisplay::flushPC(std::ofstream* f)
 			}
 
 
-			Sophus::Vector3f pt = camToWorld * (Sophus::Vector3f((x*fxi + cxi), (y*fyi + cyi), 1) * depth);
+			Sophus::Vector3f pt = camToWorld * (Sophus::Vector3f((x*fxi + cxi), (y*fyi + cyi), 1) * depth);//将像素坐标转换成世界坐标
 			tmpBuffer[num].point[0] = pt[0];
 			tmpBuffer[num].point[1] = pt[1];
 			tmpBuffer[num].point[2] = pt[2];
@@ -324,7 +326,7 @@ int KeyFrameDisplay::flushPC(std::ofstream* f)
 
 
 
-
+//将在一帧下要显示的点云信息保存到文件
 	for(int i=0;i<num;i++)
 	{
 		f->write((const char *)tmpBuffer[i].point,3*sizeof(float));

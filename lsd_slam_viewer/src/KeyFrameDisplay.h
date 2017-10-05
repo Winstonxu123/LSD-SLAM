@@ -55,8 +55,8 @@ public:
 
 
 	void setFrom(lsd_slam_viewer::keyframeMsgConstPtr msg);
-	void drawCam(float lineWidth = 1, float* color = 0);
-	void drawPC(float pointSize = 1, float alpha = 1);
+	void drawCam(float lineWidth = 1, float* color = 0);//画相机轨迹
+	void drawPC(float pointSize = 1, float alpha = 1);//画点云
 	void refreshPC();
 
 	int flushPC(std::ofstream* f);
@@ -86,7 +86,7 @@ private:
 
 
 	// pointcloud data & respective buffer
-	InputPointDense* originalInput;
+	InputPointDense* originalInput; //点云的数据结构，由逆深度，逆深度方差和RGBD组成
 
 
 	// buffer & how many

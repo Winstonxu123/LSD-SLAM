@@ -175,7 +175,7 @@ void PointCloudViewer::draw()
 	glPushMatrix();
 
 
-	if(animationPlaybackEnabled)
+	if(animationPlaybackEnabled) //判断要不要进行回放
 	{
 		double tm = ros::Time::now().toSec() - animationPlaybackTime;
 

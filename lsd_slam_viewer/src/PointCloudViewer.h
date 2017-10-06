@@ -96,7 +96,7 @@ public:
 
 
 		float x,y,z;
-
+//从一个指定字符串中读出相应格式的数据
 		if(17 != sscanf(s.c_str(),"Animation: %d at %lf (dur %lf) S: %f %f %d %d %d %d %d Frame: %lf %lf %lf %lf %f %f %f %d\n",
 				&isSettings_i, &time, &duration,
 				&scaledTH, &absTH, &showLoopClosures_i, &showKeyframes_i, &showCurrentCam_i, &sparsity, &neighb,
@@ -164,7 +164,7 @@ public:
 protected :
 	virtual void draw();
 	virtual void init();
-	virtual void keyPressEvent(QKeyEvent *e);
+	virtual void keyPressEvent(QKeyEvent *e); //支持键盘扫描
 	virtual void keyReleaseEvent(QKeyEvent *e);
 	virtual QString helpString() const;
 

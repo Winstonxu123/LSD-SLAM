@@ -171,7 +171,7 @@ int main( int argc, char** argv )
 	// Make the viewer window visible on screen.
 	viewer->show();
 
-	boost::thread rosThread;
+	boost::thread rosThread; //rosThread根据参数进行决策
 
 	if(argc > 1)
 	{

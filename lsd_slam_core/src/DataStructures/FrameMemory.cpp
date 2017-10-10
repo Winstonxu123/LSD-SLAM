@@ -44,10 +44,10 @@ void FrameMemory::releaseBuffes()
 
 	for(auto p : availableBuffers)
 	{
-		if(printMemoryDebugInfo)
+		if(printMemoryDebugInfo) //默认是false
 			printf("deleting %d buffers of size %d!\n", (int)p.second.size(), (int)p.first);
 
-		total += p.second.size() * p.first;
+		total += p.second.size() * p.first;//释放的总内存大小
 
 		for(unsigned int i=0;i<p.second.size();i++)
 		{
@@ -63,23 +63,23 @@ void FrameMemory::releaseBuffes()
 		printf("released %.1f MB!\n", total / (1000000.0f));
 }
 
-
-void* FrameMemory::getBuffer(unsigned int sizeInByte)
+//--------------------------------------------内存管理------------------------------------------------------------------------------------------
+void* FrameMemory::getBuffer(unsigned int sizeInByte) //获取一块指定大小的内存
 {
 	boost::unique_lock<boost::mutex> lock(accessMutex);
 	
-	if (availableBuffers.count(sizeInByte) > 0)
+	if (availableBuffers.count(sizeInByte) > 0)//判断可用的buffer中有没有sizeInByte这么多大小的内存
 	{
-		std::vector< void* >& availableOfSize = availableBuffers.at(sizeInByte);
+		std::vector< void* >& availableOfSize = availableBuffers.at(sizeInByte);//获取sizeInByte所对应的value的引用，也就是需要的内存的首地址
 		if (availableOfSize.empty())
 		{
-			void* buffer = allocateBuffer(sizeInByte);
+			void* buffer = allocateBuffer(sizeInByte);//把buffer的首地址和尺寸映射起来，之后返回buffer的首地址，这样便可以得到一个buffer
 //			assert(buffer != 0);
 			return buffer;
 		}
 		else
 		{
-			void* buffer = availableOfSize.back();
+			void* buffer = availableOfSize.back();//如果不是空，那么直接得到一个那个尺寸的内存，然后返回
 			availableOfSize.pop_back();
 
 //			assert(buffer != 0);
@@ -107,9 +107,9 @@ void FrameMemory::returnBuffer(void* buffer)
 	
 	unsigned int size = bufferSizes.at(buffer);
 	//printf("returnFloatBuffer(%d)\n", size);
-	if (availableBuffers.count(size) > 0)
+	if (availableBuffers.count(size) > 0)		//如果可用的内存中能够容纳buffer，就把它放到availableBuffers里
 		availableBuffers.at(size).push_back(buffer);
-	else
+	else										//如果可用的内存中没有能容纳下buffer的，就创建一块这么大小的buffer放进去
 	{
 		std::vector< void* > availableOfSize;
 		availableOfSize.push_back(buffer);
@@ -125,6 +125,9 @@ void* FrameMemory::allocateBuffer(unsigned int size)
 	bufferSizes.insert(std::make_pair(buffer, size));
 	return buffer;
 }
+
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
 
 boost::shared_lock<boost::shared_mutex> FrameMemory::activateFrame(Frame* frame)
 {

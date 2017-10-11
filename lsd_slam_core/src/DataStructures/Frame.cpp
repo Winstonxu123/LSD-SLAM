@@ -196,14 +196,14 @@ void Frame::calculateMeanInformation()
 }
 
 
-void Frame::setDepth(const DepthMapPixelHypothesis* newDepth)
+void Frame::setDepth(const DepthMapPixelHypothesis* newDepth)//set的是金字塔的第一层
 {
 
 	boost::shared_lock<boost::shared_mutex> lock = getActiveLock();
 	boost::unique_lock<boost::mutex> lock2(buildMutex);
 
 	if(data.idepth[0] == 0)
-		data.idepth[0] = FrameMemory::getInstance().getFloatBuffer(data.width[0]*data.height[0]);
+		data.idepth[0] = FrameMemory::getInstance().getFloatBuffer(data.width[0]*data.height[0]);//申请了金字塔第一层的内存
 	if(data.idepthVar[0] == 0)
 		data.idepthVar[0] = FrameMemory::getInstance().getFloatBuffer(data.width[0]*data.height[0]);
 
@@ -216,7 +216,7 @@ void Frame::setDepth(const DepthMapPixelHypothesis* newDepth)
 
 	for (; pyrIDepth < pyrIDepthMax; ++ pyrIDepth, ++ pyrIDepthVar, ++ newDepth) //, ++ pyrRefID)
 	{
-		if (newDepth->isValid && newDepth->idepth_smoothed >= -0.05)
+		if (newDepth->isValid && newDepth->idepth_smoothed >= -0.05)//idepth_smoothed和idepth_var_smoothed是高斯分布平滑后的均值和方差(这个是DepthMapPixelHypothesis类型的成员变量)，如果某点是缺失的(也就是说没有估计值)，那么那一点的值填为-1
 		{
 			*pyrIDepth = newDepth->idepth_smoothed;
 			*pyrIDepthVar = newDepth->idepth_var_smoothed;
@@ -231,7 +231,7 @@ void Frame::setDepth(const DepthMapPixelHypothesis* newDepth)
 		}
 	}
 	
-	meanIdepth = sumIdepth / numIdepth;
+	meanIdepth = sumIdepth / numIdepth; //计算这一帧的平均深度和总共有多少个点被估计出深度
 	numPoints = numIdepth;
 
 
@@ -242,7 +242,7 @@ void Frame::setDepth(const DepthMapPixelHypothesis* newDepth)
 	depthHasBeenUpdatedFlag = true;
 }
 
-void Frame::setDepthFromGroundTruth(const float* depth, float cov_scale)
+void Frame::setDepthFromGroundTruth(const float* depth, float cov_scale)	//把真实的深度传递给当前帧
 {
 	boost::shared_lock<boost::shared_mutex> lock = getActiveLock();
 	const float* pyrMaxGradient = maxGradients(0);
@@ -292,6 +292,8 @@ void Frame::setDepthFromGroundTruth(const float* depth, float cov_scale)
 	data.hasIDepthBeenSet = true;
 }
 
+
+//这个函数是用来设置变换的，第一个参数传入是哪一帧，第二个参数是这一帧的相似变换矩阵，相机参数，以及金字塔等级
 void Frame::prepareForStereoWith(Frame* other, Sim3 thisToOther, const Eigen::Matrix3f& K, const int level)
 {
 	Sim3 otherToThis = thisToOther.inverse();
@@ -374,7 +376,7 @@ void Frame::release(int dataFlags, bool pyramidsOnly, bool invalidateOnly)
 	}
 }
 
-bool Frame::minimizeInMemory()
+bool Frame::minimizeInMemory() //内存释放
 {
 	if(activeMutex.timed_lock(boost::posix_time::milliseconds(10)))
 	{
@@ -422,9 +424,10 @@ void Frame::initialize(int id, int width, int height, const Eigen::Matrix3f& K, 
 	
 	numMappablePixels = -1;
 
+//初始化金字塔
 	for (int level = 0; level < PYRAMID_LEVELS; ++ level)
 	{
-		data.width[level] = width >> level;
+		data.width[level] = width >> level; //右移
 		data.height[level] = height >> level;
 
 		data.imageValid[level] = false;
@@ -513,6 +516,7 @@ void Frame::buildImage(int level)
 		data.image[level] = FrameMemory::getInstance().getFloatBuffer(data.width[level] * data.height[level]);
 	float* dest = data.image[level];
 
+//嵌入汇编代码,如果开关都没打开，直接跳过------------------------------------------------------------------------------------------------------------------
 #if defined(ENABLE_SSE)
 	// I assume all all subsampled width's are a multiple of 8.
 	// if this is not the case, this still works except for the last * pixel, which will produce a segfault.
@@ -610,6 +614,7 @@ void Frame::buildImage(int level)
 		return;
 	}
 #endif
+//---------------------------------------------------------------------------------------------------------------------------------------------------------
 
 	int wh = width*height;
 	const float* s;
@@ -657,7 +662,7 @@ void Frame::buildGradients(int level)
 		data.gradients[level] = (Eigen::Vector4f*)FrameMemory::getInstance().getBuffer(sizeof(Eigen::Vector4f) * width * height);
 	const float* img_pt = data.image[level] + width;
 	const float* img_pt_max = data.image[level] + width*(height-1);
-	Eigen::Vector4f* gradxyii_pt = data.gradients[level] + width;
+	Eigen::Vector4f* gradxyii_pt = data.gradients[level] + width; //用一个4维的向量去表达梯度，前面2个维度分别是左右像素和上下像素的差分，第3维存储当前图像的值，最后一个维度没有存储数据
 	
 	// in each iteration i need -1,0,p1,mw,pw
 	float val_m1 = *(img_pt-1);
@@ -668,11 +673,11 @@ void Frame::buildGradients(int level)
 	{
 		val_p1 = *(img_pt+1);
 
-		*((float*)gradxyii_pt) = 0.5f*(val_p1 - val_m1);
-		*(((float*)gradxyii_pt)+1) = 0.5f*(*(img_pt+width) - *(img_pt-width));
+		*((float*)gradxyii_pt) = 0.5f*(val_p1 - val_m1); //左右差分
+		*(((float*)gradxyii_pt)+1) = 0.5f*(*(img_pt+width) - *(img_pt-width));//上下差分
 		*(((float*)gradxyii_pt)+2) = val_00;
 
-		val_m1 = val_00;
+		val_m1 = val_00; //进行更新
 		val_00 = val_p1;
 	}
 
@@ -772,6 +777,7 @@ void Frame::releaseMaxGradients(int level)
 	data.maxGradients[level] = 0;
 }
 
+//构建逆深度和逆深度方差金字塔，逆深度以及逆深度误差的计算法则------------------------------------------------------------------------------------------------
 void Frame::buildIDepthAndIDepthVar(int level)
 {
 	if (! data.hasIDepthBeenSet)
@@ -798,9 +804,9 @@ void Frame::buildIDepthAndIDepthVar(int level)
 	int height = data.height[level];
 	
 	if (data.idepth[level] == 0)
-		data.idepth[level] = FrameMemory::getInstance().getFloatBuffer(width * height);
+		data.idepth[level] = FrameMemory::getInstance().getFloatBuffer(width * height);//没有为它分配内存的话，就创建一块内存给它
 	if (data.idepthVar[level] == 0)
-		data.idepthVar[level] = FrameMemory::getInstance().getFloatBuffer(width * height);
+		data.idepthVar[level] = FrameMemory::getInstance().getFloatBuffer(width * height);//逆深度和逆深度方差各有一块内存
 
 	int sw = data.width[level - 1];
 
@@ -823,7 +829,7 @@ void Frame::buildIDepthAndIDepthVar(int level)
 			// build sums
 			float ivar;
 			float var = idepthVarSource[idx];
-			if(var > 0)
+			if(var > 0)    //构建深度的金字塔，4个深度融合为1个
 			{
 				ivar = 1.0f / var;
 				ivarSumsSum += ivar;
@@ -875,6 +881,7 @@ void Frame::buildIDepthAndIDepthVar(int level)
 	data.idepthValid[level] = true;
 	data.idepthVarValid[level] = true;
 }
+//---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 void Frame::releaseIDepth(int level)
 {

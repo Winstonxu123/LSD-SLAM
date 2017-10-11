@@ -232,7 +232,7 @@ private:
 	{
 		int id;
 		
-		int width[PYRAMID_LEVELS], height[PYRAMID_LEVELS];
+		int width[PYRAMID_LEVELS], height[PYRAMID_LEVELS]; //根据settings，PYRAMID_LEVELS=5
 
 		Eigen::Matrix3f K[PYRAMID_LEVELS], KInv[PYRAMID_LEVELS];
 		float fx[PYRAMID_LEVELS], fy[PYRAMID_LEVELS], cx[PYRAMID_LEVELS], cy[PYRAMID_LEVELS];

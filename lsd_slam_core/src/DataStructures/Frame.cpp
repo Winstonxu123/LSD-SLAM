@@ -777,7 +777,7 @@ void Frame::releaseMaxGradients(int level)
 	data.maxGradients[level] = 0;
 }
 
-//构建逆深度和逆深度方差金字塔，逆深度以及逆深度误差的计算法则------------------------------------------------------------------------------------------------
+//----------------------------------------------------构建逆深度和逆深度方差金字塔，逆深度以及逆深度误差的计算法则------------------------------------------------------------------------------------------------
 void Frame::buildIDepthAndIDepthVar(int level)
 {
 	if (! data.hasIDepthBeenSet)
@@ -808,7 +808,7 @@ void Frame::buildIDepthAndIDepthVar(int level)
 	if (data.idepthVar[level] == 0)
 		data.idepthVar[level] = FrameMemory::getInstance().getFloatBuffer(width * height);//逆深度和逆深度方差各有一块内存
 
-	int sw = data.width[level - 1];
+	int sw = data.width[level - 1];//它的下层宽度
 
 	const float* idepthSource = data.idepth[level - 1];
 	const float* idepthVarSource = data.idepthVar[level - 1];

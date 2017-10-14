@@ -99,7 +99,7 @@ public:
 	/** Returns the frame's recording timestamp. */
 	inline double timestamp() const;
 	
-	inline float* image(int level = 0);
+	inline float* image(int level = 0);//返回一幅图数据的首地址
 	inline const Eigen::Vector4f* gradients(int level = 0);
 	inline const float* maxGradients(int level = 0);
 	inline bool hasIDepthBeenSet() const;
@@ -115,7 +115,7 @@ public:
 
 	/** Flags for use with require() and requirePyramid(). See the Frame class
 	  * documentation for their exact meaning. */
-	enum DataFlags
+	enum DataFlags //一个6位的二进制数据
 	{
 		IMAGE			= 1<<0,
 		GRADIENTS		= 1<<1,

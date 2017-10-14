@@ -49,7 +49,7 @@
 
 namespace lsd_slam
 {
-
+//SE3与sim3的转换关系
 inline Sim3 sim3FromSE3(const SE3& se3, sophusType scale)
 {
 	Sim3 result(se3.unit_quaternion(), se3.translation());
